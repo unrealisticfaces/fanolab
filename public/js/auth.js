@@ -11,6 +11,7 @@ if (loginForm) {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
+        // Show loading spinner
         loginBtn.disabled = true;
         loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Authenticating...';
         loginError.classList.add('d-none');
@@ -40,17 +41,17 @@ if (loginForm) {
                 window.location.href = 'dashboard.html';
             } else {
                 // Wrong password
-                loginError.textContent = "Invalid email or password.";
+                loginError.textContent = data.error || "Invalid email or password.";
                 loginError.classList.remove('d-none');
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = 'Login';
+                loginBtn.innerHTML = 'SIGN IN';
             }
         } catch (error) {
             console.error("Connection error:", error);
             loginError.textContent = "Cannot connect to the server.";
             loginError.classList.remove('d-none');
             loginBtn.disabled = false;
-            loginBtn.innerHTML = 'Login';
+            loginBtn.innerHTML = 'SIGN IN';
         }
     });
 }

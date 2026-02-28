@@ -17,7 +17,7 @@
             padding: 0;
             height: 100%;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0f172a; /* Deep dark blue-black */
+            background-color: #0f172a; 
             overflow: hidden;
         }
 
@@ -53,15 +53,11 @@
 
        .brand-logo {
             width: 120px;
-            height: auto; /* Maintains aspect ratio */
+            height: auto; 
             display: block;
             margin: 0 auto 20px auto;
-            
-            /* THE FIX: Adding Border Radius to the Logo itself */
             border-radius: 15px; 
             overflow: hidden; 
-            
-            /* Glow effect to match Fano Lab theme */
             filter: drop-shadow(0 0 8px var(--primary-glow));
             border: 1px solid rgba(255, 255, 255, 0.1); 
         }
@@ -107,9 +103,9 @@
 
         /* --- RIGHT SIDE: HIGHLIGHT IMAGE --- */
         .image-section {
-            flex: 1.5; /* Makes the photo side slightly wider */
+            flex: 1.5; 
             position: relative;
-            display: none; /* Hidden on small mobile screens */
+            display: none; 
         }
 
         @media (min-width: 992px) {
@@ -123,7 +119,6 @@
             filter: brightness(0.7) contrast(1.1);
         }
 
-        /* Overlay to blend the image into the login side */
         .overlay-gradient {
             position: absolute;
             top: 0;
@@ -168,9 +163,9 @@
                         <label class="form-label">PASSWORD</label>
                         <input type="password" class="form-control" id="password" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-login w-100">SIGN IN</button>
+                    <button type="submit" id="loginBtn" class="btn btn-primary btn-login w-100">SIGN IN</button>
                 </form>
-                <div id="errorMessage" class="text-danger mt-3 text-center d-none"></div>
+                <div id="loginError" class="text-danger mt-3 text-center d-none"></div>
             </div>
         </section>
 
@@ -185,7 +180,6 @@
         </section>
     </div>
 
-    <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/auth.js"></script>
 </body>
 </html>
