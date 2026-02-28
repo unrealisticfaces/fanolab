@@ -1,47 +1,56 @@
-// js/auth.js
-
-import { auth, db } from './firebase-config.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+// public/js/auth.js
 
 const loginForm = document.getElementById('loginForm');
-const errorMessage = document.getElementById('errorMessage');
+const loginBtn = document.getElementById('loginBtn');
+const loginError = document.getElementById('loginError');
 
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Grab values from the form
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
+        
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Authenticating...';
+        loginError.classList.add('d-none');
 
         try {
-            // 1. Authenticate the user
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            // Send the email and password to our secure Node.js server
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-            // 2. Fetch the user's role from the Realtime Database
-            const userRef = ref(db, 'users/' + user.uid);
-            const snapshot = await get(userRef);
+            const data = await response.json();
 
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
+            if (response.ok) {
+                // Success! Save the ticket and go to the dashboard
+                localStorage.setItem('userToken', data.token);
+                localStorage.setItem('userName', data.email);
                 
-                // 3. Store basic info in localStorage for easy access on other pages
-                localStorage.setItem('userRole', userData.role);
-                localStorage.setItem('userName', userData.name);
-                localStorage.setItem('userUid', user.uid);
+                // Set roles 
+                if (email === "fanolaboratory@gmail.com") {
+                    localStorage.setItem('userRole', 'admin');
+                } else {
+                    localStorage.setItem('userRole', 'staff');
+                }
 
-                // 4. Redirect to the dashboard
                 window.location.href = 'dashboard.html';
             } else {
-                errorMessage.textContent = "Error: User role not found in database. Contact administrator.";
-                errorMessage.classList.remove('d-none');
+                // Wrong password
+                loginError.textContent = "Invalid email or password.";
+                loginError.classList.remove('d-none');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = 'Login';
             }
         } catch (error) {
-            // Handle incorrect passwords or emails
-            errorMessage.textContent = "Login failed: " + error.message;
-            errorMessage.classList.remove('d-none');
+            console.error("Connection error:", error);
+            loginError.textContent = "Cannot connect to the server.";
+            loginError.classList.remove('d-none');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = 'Login';
         }
     });
 }

@@ -19,10 +19,38 @@ admin.initializeApp({
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
   }),
-  databaseURL: "https://fanolaboratory-default-rtdb.asia-southeast1.firebasedatabase.app" 
+  // Updated to your new dentallab-erp database URL!
+  databaseURL: "https://dentallab-erp-default-rtdb.asia-southeast1.firebasedatabase.app" 
 });
 
 const db = admin.database();
+
+// --- SECURE LOGIN ROUTE ---
+app.post('/api/login', async (req, res) => {
+    const { email, password } = req.body;
+    const apiKey = process.env.FIREBASE_API_KEY; // Pulls from your .env vault!
+
+    try {
+        // The server securely checks the password with Google Identity Toolkit
+        const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, returnSecureToken: true })
+        });
+        
+        const data = await response.json();
+
+        if (data.error) {
+            return res.status(401).json({ error: data.error.message });
+        }
+
+        // Send a success ticket back to the browser
+        res.json({ token: data.idToken, email: data.email });
+    } catch (error) {
+        console.error("Login Error:", error);
+        res.status(500).json({ error: "Server error during login." });
+    }
+});
 
 // --- SECURE DATA ROUTE FOR DASHBOARD ---
 app.get('/api/sales', async (req, res) => {
@@ -45,5 +73,5 @@ app.get('/api/sales', async (req, res) => {
 // Start the engine
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 New Secure App running on http://localhost:${PORT}`);
+    console.log(`🚀 Secure App running on http://localhost:${PORT}`);
 });
