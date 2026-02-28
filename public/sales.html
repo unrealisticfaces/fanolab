@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Sales - Fano Laboratory</title>
+    <script>const savedTheme = localStorage.getItem('theme') || 'dark'; document.documentElement.setAttribute('data-bs-theme', savedTheme);</script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { overflow-x: hidden; }
+        .sidebar { width: 250px; height: 100%; position: fixed; top: 0; left: 0; bottom: 0; background-color: #0f172a !important; border-right: 1px solid rgba(255, 255, 255, 0.1); z-index: 1040; transition: transform 0.3s ease; overflow-y: auto !important; -webkit-overflow-scrolling: touch; }
+        .sidebar::-webkit-scrollbar { display: none; }
+        .sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+        .sidebar.collapsed { transform: translateX(-250px); }
+        .main-content { margin-left: 250px; min-height: 100vh; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        .main-content.expanded { margin-left: 0; }
+        .sidebar .nav-link { color: #94a3b8; border-radius: 8px; margin-bottom: 5px; padding: 10px 15px; transition: all 0.2s ease; }
+        .sidebar .nav-link:hover { background-color: rgba(255, 255, 255, 0.05); color: #ffffff; }
+        .sidebar .nav-link.active { background-color: #00d1ff; color: #000 !important; font-weight: bold; box-shadow: 0 4px 12px rgba(0, 209, 255, 0.3); }
+        .top-header { background-color: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); height: 60px; position: sticky; top: 0; z-index: 999; }
+        #sidebarOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1030; display: none; opacity: 0; transition: opacity 0.3s ease; }
+        #sidebarOverlay.show { display: block; opacity: 1; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-250px); }
+            .sidebar.mobile-open { transform: translateX(0); box-shadow: 4px 0 15px rgba(0,0,0,0.5); }
+            .main-content { margin-left: 0; }
+            .main-content.expanded { margin-left: 0; }
+        }
+        .table { font-size: 0.85rem; }
+        .modal-content { border: none; border-radius: 12px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); }
+    </style>
+</head>
+<body>
+
+    <div id="sidebarOverlay"></div>
+
+    <div class="sidebar d-flex flex-column p-3" id="sidebar" data-bs-theme="dark">
+        <a href="dashboard.html" class="text-white text-decoration-none mb-4 mt-2 px-2 d-flex align-items-center">
+            <span class="fs-4 fw-bold" style="color: #00d1ff;">Menu</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item"><a class="nav-link" href="dashboard.html">📊 Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link active" href="sales.html">📁 All Sales</a></li>
+            <li class="nav-item"><a class="nav-link" href="inprogress.html">⚙️ In Progress</a></li>
+            <li class="nav-item"><a class="nav-link" href="duedate.html">⏳ Due Dates</a></li>
+            <li class="nav-item"><a class="nav-link" href="delivered.html">✅ Delivered Log</a></li>
+            <li class="nav-item"><a class="nav-link" href="payment.html">💳 Payments</a></li>
+            <li class="nav-item"><a class="nav-link" href="audit.html">🔒 Audit Logs</a></li>
+        </ul>
+        <hr class="text-white-50">
+        <div>
+            <a href="queue.html" class="nav-link text-warning fw-bold py-2 px-3 mb-2 rounded text-center d-block text-decoration-none" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255,193,7,0.3);">🖥️ Live Queue</a>
+            <button id="logoutBtn" class="btn btn-outline-danger w-100 fw-bold shadow-sm">Logout</button>
+        </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <div class="top-header px-3 px-md-4 d-flex justify-content-between align-items-center shadow-sm">
+            <button id="sidebarToggle" class="btn btn-link text-body fs-4 text-decoration-none p-0 me-3" title="Toggle Menu">☰</button>
+            <div class="d-flex align-items-center">
+                <button id="themeToggleBtn" class="btn btn-sm btn-outline-secondary border-0 fs-5 me-3" title="Toggle Theme">☀️</button>
+                <div class="dropdown">
+                    <button class="btn btn-warning text-dark fw-bold btn-sm dropdown-toggle position-relative shadow-sm" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        🔔 Alerts <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="display: none;">0</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="notificationDropdown" id="notificationList" style="min-width: 320px; max-width: 100vw; max-height: 400px; overflow-y: auto; overflow-x: hidden;"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid mt-4 px-3 px-md-4 pb-5">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-4 pb-3 border-bottom border-secondary-subtle gap-2">
+                <h2 class="fw-bold mb-0 fs-3">All Sales & Records</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success fw-bold shadow-sm" id="exportBtn">Export</button>
+                    <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addSaleModal">+ Add Job</button>
+                </div>
+            </div>
+
+            <div class="row mb-3 g-2">
+                <div class="col-md-8 mb-2">
+                    <input type="text" id="searchInput" class="form-control bg-body text-body shadow-sm border-secondary-subtle" placeholder="Search RX Number, Doctor, Desc, Shade, or Tech...">
+                </div>
+                <div class="col-md-4 mb-2">
+                    <select id="filterPayment" class="form-select bg-body text-body shadow-sm border-secondary-subtle">
+                        <option value="All">All Payment Statuses</option>
+                        <option value="Unpaid">Unpaid</option>
+                        <option value="Downpayment">Downpayment</option>
+                        <option value="Paid">Paid in Full</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-body-tertiary">
+                <div class="card-body p-0">
+                    <div class="table-responsive rounded">
+                        <table class="table table-sm table-hover table-bordered align-middle text-nowrap mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date Received</th><th class="text-warning">Due Date</th><th class="text-info">RX Number</th>
+                                    <th>Doctor</th><th>Description</th><th>Units</th><th>Shade</th>
+                                    <th>Tech (Metal)</th><th>Tech (Build Up)</th><th>Pick Up</th><th>Deliver</th>
+                                    <th>Date Delivered</th><th>Total Amount (₱)</th><th>Payment Status</th>
+                                    <th>Balance (₱)</th><th>Job Status</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <tr><td colspan="17" class="text-center py-5"><div class="spinner-border text-secondary"></div><p class="mt-2 text-muted fw-bold">Loading all records...</p></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addSaleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-body text-body">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold">Add New Lab Job</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-3 p-md-4">
+                    <form id="addSaleForm">
+                        <h6 class="text-primary border-bottom pb-2 fw-bold">Job Details</h6>
+                        <div class="row mb-3">
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Date Rec'd *</label><input type="date" class="form-control shadow-sm" id="dateReceived" required></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold text-danger">Due Date *</label><input type="date" class="form-control border-danger shadow-sm" id="dueDate" required></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold text-info">RX Number</label><input type="text" class="form-control border-info shadow-sm" id="rxNumber" placeholder="e.g. RX-1001"></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Doctor *</label><input type="text" class="form-control shadow-sm" id="doctor" required></div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-12 col-md-6 mb-2"><label class="form-label small fw-bold">Description *</label><input type="text" class="form-control shadow-sm" id="description" required></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Units *</label><input type="number" class="form-control shadow-sm" id="units" required></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Shade</label><input type="text" class="form-control shadow-sm" id="shade"></div>
+                        </div>
+                        <h6 class="text-primary border-bottom pb-2 mt-4 fw-bold">Personnel & Logistics</h6>
+                        <div class="row mb-3">
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Tech (Metal)</label><input type="text" class="form-control shadow-sm" id="techMetal"></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Tech (Build)</label><input type="text" class="form-control shadow-sm" id="techBuildUp"></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Pick Up</label><input type="text" class="form-control shadow-sm" id="messengerPickUp"></div>
+                            <div class="col-6 col-md-3 mb-2"><label class="form-label small fw-bold">Deliver</label><input type="text" class="form-control shadow-sm" id="messengerDeliver"></div>
+                        </div>
+                        <h6 class="text-primary border-bottom pb-2 mt-4 fw-bold">Billing Details</h6>
+                        <div class="row mb-4">
+                            <div class="col-12 col-md-4 mb-2"><label class="form-label small fw-bold">Total Amount (₱) *</label><input type="number" step="0.01" class="form-control shadow-sm" id="amount" required></div>
+                            <div class="col-6 col-md-4 mb-2"><label class="form-label small fw-bold">Payment Status</label><select class="form-select shadow-sm" id="paymentStatus"><option value="Unpaid">Unpaid</option><option value="Downpayment">Downpayment</option><option value="Paid">Paid in Full</option></select></div>
+                            <div class="col-6 col-md-4 mb-2"><label class="form-label small fw-bold">Amount Paid (₱)</label><input type="number" step="0.01" class="form-control shadow-sm" id="amountPaid" value="0"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Save Record</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/global.js"></script>
+    <script type="module" src="js/sales.js"></script>
+</body>
+</html>
